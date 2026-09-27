@@ -1,4 +1,4 @@
-import { SubtitleItem, UserConfig } from "../types";
+import { ProviderDebugInfo, SubtitleItem, UserConfig } from "../types";
 
 export async function fetchSubDLSubtitles(
   imdbId: string,
@@ -14,11 +14,15 @@ export async function fetchSubDLSubtitles(
   }
 
   try {
-    const langs = (config?.languages || ["id", "en"]).join(",");
+    // SubDL API expects uppercase comma-separated codes, e.g. ID,EN
+    const langs = (config?.languages || ["id", "en"])
+      .map((l) => l.toUpperCase())
+      .join(",");
+
     const params = new URLSearchParams({
       api_key: apiKey,
       imdb_id: imdbId,
-      type: type === "series" ? "series" : "movie",
+      type: type === "series" ? "tv" : "movie",
       languages: langs,
     });
 
@@ -52,7 +56,6 @@ export async function fetchSubDLSubtitles(
         ? downloadPath
         : `https://dl.subdl.com${downloadPath}`;
 
-      // Clean proxy URL or direct URL
       const proxyUrl = originUrl
         ? `${originUrl}/clean-sub?url=${encodeURIComponent(rawUrl)}&name=${encodeURIComponent(sub.release_name || sub.name || "subdl")}`
         : rawUrl;
@@ -71,5 +74,67 @@ export async function fetchSubDLSubtitles(
   } catch (err) {
     console.error("SubDL provider error:", err);
     return [];
+  }
+}
+
+export async function debugSubDL(
+  imdbId: string,
+  type: string,
+  config?: UserConfig
+): Promise<ProviderDebugInfo> {
+  const apiKey = config?.subdlApiKey;
+  if (!apiKey) {
+    return { enabled: false, count: 0, error: "API Key belum diisi" };
+  }
+
+  try {
+    const langs = (config?.languages || ["id", "en"])
+      .map((l) => l.toUpperCase())
+      .join(",");
+
+    const params = new URLSearchParams({
+      api_key: apiKey,
+      imdb_id: imdbId,
+      type: type === "series" ? "tv" : "movie",
+      languages: langs,
+    });
+
+    const apiUrl = `https://api.subdl.com/api/v1/subtitles?${params.toString()}`;
+    const res = await fetch(apiUrl, {
+      headers: { "Accept": "application/json" },
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      return {
+        enabled: true,
+        status: res.status,
+        count: 0,
+        error: `HTTP ${res.status}: ${body.slice(0, 150)}`,
+      };
+    }
+
+    const data = await res.json() as any;
+    if (!data.status) {
+      return {
+        enabled: true,
+        status: res.status,
+        count: 0,
+        error: data.error || data.message || "SubDL mengembalikan status false",
+      };
+    }
+
+    const subs = Array.isArray(data.subtitles) ? data.subtitles : [];
+    return {
+      enabled: true,
+      status: res.status,
+      count: subs.length,
+      sample: subs.slice(0, 3).map((s: any) => ({
+        title: s.release_name || s.name,
+        lang: s.language || s.lang,
+      })),
+    };
+  } catch (err: any) {
+    return { enabled: true, count: 0, error: err?.message || String(err) };
   }
 }

@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { Bindings, StremioManifest } from "./types";
+import { Bindings, StremioManifest, UserConfig } from "./types";
 import { parseConfig } from "./config";
-import { aggregateSubtitles } from "./providers";
+import { aggregateSubtitles, debugProviders } from "./providers";
 import { fetchAndCleanSubtitle } from "./cleaner";
 import { renderConfigurePage } from "./views/configure";
 
@@ -56,6 +56,30 @@ app.get("/manifest.json", (c) => {
 app.get("/:config/manifest.json", (c) => {
   return c.json(getManifest());
 });
+
+// Debug endpoint handler
+async function handleDebug(c: any, configParam?: string) {
+  const imdbId = c.req.query("id") || "tt1375666"; // Inception as default test
+  const type = c.req.query("type") || "movie";
+
+  // Support config from URL path, query params, or worker env
+  const userConfig: UserConfig = parseConfig(configParam, c.env);
+  if (c.req.query("subdl_key")) userConfig.subdlApiKey = c.req.query("subdl_key");
+  if (c.req.query("os_key")) userConfig.openSubtitlesApiKey = c.req.query("os_key");
+  if (c.req.query("subsource_key")) userConfig.subsourceToken = c.req.query("subsource_key");
+  if (c.req.query("langs")) {
+    userConfig.languages = c.req.query("langs").split(",").map((l: string) => l.trim().toLowerCase()).filter(Boolean);
+  }
+
+  const debugResult = await debugProviders(imdbId, type, userConfig);
+  return c.json(debugResult, 200, {
+    "Cache-Control": "no-store",
+    "Access-Control-Allow-Origin": "*",
+  });
+}
+
+app.get("/debug", (c) => handleDebug(c));
+app.get("/:config/debug", (c) => handleDebug(c, c.req.param("config")));
 
 // Subtitles endpoint handler
 async function handleSubtitles(c: any, configParam?: string) {

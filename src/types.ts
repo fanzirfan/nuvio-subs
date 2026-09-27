@@ -38,3 +38,22 @@ export interface Bindings {
   OPENSUBTITLES_API_KEY?: string;
   SUBSOURCE_TOKEN?: string;
 }
+
+export interface ProviderDebugInfo {
+  enabled: boolean;
+  status?: number;
+  count: number;
+  error?: string;
+  sample?: Array<{ title?: string; lang: string }>;
+}
+
+export interface DebugResponse {
+  imdbId: string;
+  type: string;
+  providers: {
+    subdl: ProviderDebugInfo;
+    opensubtitles: ProviderDebugInfo;
+    subsource: ProviderDebugInfo;
+  };
+  totalSubtitles: number;
+}

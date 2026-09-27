@@ -1,4 +1,4 @@
-import { SubtitleItem, UserConfig } from "../types";
+import { ProviderDebugInfo, SubtitleItem, UserConfig } from "../types";
 
 export async function fetchOpenSubtitles(
   imdbId: string,
@@ -14,7 +14,6 @@ export async function fetchOpenSubtitles(
   }
 
   try {
-    // OpenSubtitles uses numeric part of IMDB ID e.g. tt1234567 -> 1234567
     const numericImdb = imdbId.replace(/^tt/, "");
     const langs = (config?.languages || ["id", "en"]).join(",");
 
@@ -24,8 +23,11 @@ export async function fetchOpenSubtitles(
     });
 
     if (type === "series" && season !== undefined && episode !== undefined) {
+      params.append("type", "episode");
       params.append("season_number", season.toString());
       params.append("episode_number", episode.toString());
+    } else {
+      params.append("type", "movie");
     }
 
     const apiUrl = `https://api.opensubtitles.com/api/v1/subtitles?${params.toString()}`;
@@ -59,12 +61,8 @@ export async function fetchOpenSubtitles(
       const fileId = file.file_id;
       if (!fileId) continue;
 
-      // OpenSubtitles download via proxy or direct link
-      // We pass the download request payload to our worker's proxy
-      const downloadTriggerUrl = `https://api.opensubtitles.com/api/v1/download`;
       const langCode = (attributes.language || "en").toLowerCase();
 
-      // We can use our clean-sub endpoint with a special flag for OpenSubtitles API download
       const proxyUrl = originUrl
         ? `${originUrl}/clean-sub?os_file_id=${fileId}&os_api_key=${encodeURIComponent(apiKey)}&name=${encodeURIComponent(attributes.release || file.file_name || "opensubtitles")}`
         : "";
@@ -81,5 +79,65 @@ export async function fetchOpenSubtitles(
   } catch (err) {
     console.error("OpenSubtitles provider error:", err);
     return [];
+  }
+}
+
+export async function debugOpenSubtitles(
+  imdbId: string,
+  type: string,
+  config?: UserConfig
+): Promise<ProviderDebugInfo> {
+  const apiKey = config?.openSubtitlesApiKey;
+  if (!apiKey) {
+    return { enabled: false, count: 0, error: "API Key belum diisi" };
+  }
+
+  try {
+    const numericImdb = imdbId.replace(/^tt/, "");
+    const langs = (config?.languages || ["id", "en"]).join(",");
+
+    const params = new URLSearchParams({
+      imdb_id: numericImdb,
+      languages: langs,
+    });
+
+    if (type === "series") {
+      params.append("type", "episode");
+    } else {
+      params.append("type", "movie");
+    }
+
+    const apiUrl = `https://api.opensubtitles.com/api/v1/subtitles?${params.toString()}`;
+    const res = await fetch(apiUrl, {
+      headers: {
+        "Api-Key": apiKey,
+        "User-Agent": "NuvioSubs v1.0.0",
+        "Accept": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      return {
+        enabled: true,
+        status: res.status,
+        count: 0,
+        error: `HTTP ${res.status}: ${body.slice(0, 150) || res.statusText}`,
+      };
+    }
+
+    const data = await res.json() as any;
+    const subs = Array.isArray(data.data) ? data.data : [];
+    return {
+      enabled: true,
+      status: res.status,
+      count: subs.length,
+      sample: subs.slice(0, 3).map((s: any) => ({
+        title: s.attributes?.release || s.attributes?.files?.[0]?.file_name,
+        lang: s.attributes?.language,
+      })),
+    };
+  } catch (err: any) {
+    return { enabled: true, count: 0, error: err?.message || String(err) };
   }
 }

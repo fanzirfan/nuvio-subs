@@ -12,7 +12,7 @@ export function renderConfigurePage(currentOrigin: string): string {
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4">
-  <div class="max-w-xl w-full bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8">
+  <div class="max-w-xl w-full bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8 my-6">
     <!-- Header -->
     <div class="flex items-center space-x-3 mb-6">
       <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-2xl font-bold shadow-lg shadow-indigo-500/30">
@@ -98,6 +98,37 @@ export function renderConfigurePage(currentOrigin: string): string {
         </label>
       </div>
 
+      <!-- Live Provider Diagnostics / Test Button -->
+      <div class="border border-slate-800 bg-slate-900/80 rounded-xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-sm font-semibold text-slate-200">🛠️ Diagnostic Tool: Tes Status Source</div>
+          <button 
+            type="button" 
+            onclick="testProviders()" 
+            id="testBtn"
+            class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1"
+          >
+            <span>🔍 Tes Sekarang</span>
+          </button>
+        </div>
+        <p class="text-[11px] text-slate-400 mb-3">Tes apakah API key milikmu valid dan bisa mengambil subtitle untuk film contoh (Inception - <code>tt1375666</code>).</p>
+        
+        <div id="debugResults" class="space-y-2 hidden">
+          <!-- SubDL Status -->
+          <div id="debugSubdl" class="p-2.5 rounded-lg text-xs bg-slate-800/60 border border-slate-700/60">
+            <span class="font-bold">SubDL:</span> <span id="debugSubdlStatus" class="text-slate-400">Menunggu tes...</span>
+          </div>
+          <!-- OpenSubtitles Status -->
+          <div id="debugOS" class="p-2.5 rounded-lg text-xs bg-slate-800/60 border border-slate-700/60">
+            <span class="font-bold">OpenSubtitles:</span> <span id="debugOSStatus" class="text-slate-400">Menunggu tes...</span>
+          </div>
+          <!-- Subsource Status -->
+          <div id="debugSubsource" class="p-2.5 rounded-lg text-xs bg-slate-800/60 border border-slate-700/60">
+            <span class="font-bold">Subsource:</span> <span id="debugSubsourceStatus" class="text-slate-400">Menunggu tes...</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Action Buttons -->
       <div class="pt-2 flex flex-col sm:flex-row gap-3">
         <button 
@@ -165,6 +196,64 @@ export function renderConfigurePage(currentOrigin: string): string {
       setTimeout(() => {
         textSpan.innerText = 'Salin Link';
       }, 2000);
+    }
+
+    async function testProviders() {
+      const btn = document.getElementById('testBtn');
+      const resultsDiv = document.getElementById('debugResults');
+      resultsDiv.classList.remove('hidden');
+
+      const subdlKey = document.getElementById('subdlApiKey').value.trim();
+      const osKey = document.getElementById('openSubtitlesApiKey').value.trim();
+      const subsource = document.getElementById('subsourceToken').value.trim();
+      const langs = document.getElementById('languages').value.trim();
+
+      const subdlStatus = document.getElementById('debugSubdlStatus');
+      const osStatus = document.getElementById('debugOSStatus');
+      const subsourceStatus = document.getElementById('debugSubsourceStatus');
+
+      subdlStatus.innerHTML = '<span class="text-yellow-400">⏳ Sedang memeriksa...</span>';
+      osStatus.innerHTML = '<span class="text-yellow-400">⏳ Sedang memeriksa...</span>';
+      subsourceStatus.innerHTML = '<span class="text-yellow-400">⏳ Sedang memeriksa...</span>';
+      btn.disabled = true;
+
+      try {
+        const queryParams = new URLSearchParams({
+          id: 'tt1375666',
+          langs: langs || 'id,en',
+          subdl_key: subdlKey,
+          os_key: osKey,
+          subsource_key: subsource,
+        });
+
+        const res = await fetch('/debug?' + queryParams.toString());
+        const data = await res.json();
+
+        // Render SubDL
+        renderItemStatus(subdlStatus, data.providers.subdl);
+        // Render OpenSubtitles
+        renderItemStatus(osStatus, data.providers.opensubtitles);
+        // Render Subsource
+        renderItemStatus(subsourceStatus, data.providers.subsource);
+      } catch (err) {
+        subdlStatus.innerHTML = '<span class="text-red-400">Gagal tes: ' + err.message + '</span>';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function renderItemStatus(el, info) {
+      if (!info.enabled) {
+        el.innerHTML = '<span class="text-slate-400">⚪ Key belum diisi</span>';
+        return;
+      }
+      if (info.count > 0) {
+        el.innerHTML = '<span class="text-emerald-400 font-semibold">🟢 Aktif (Ditemukan ' + info.count + ' subtitle)</span>';
+      } else if (info.status === 200) {
+        el.innerHTML = '<span class="text-amber-400">🟡 Terhubung, tetapi 0 subtitle ditemukan untuk bahasa ini</span>';
+      } else {
+        el.innerHTML = '<span class="text-red-400 font-semibold">🔴 Error: ' + (info.error || 'HTTP ' + info.status) + '</span>';
+      }
     }
   </script>
 </body>
