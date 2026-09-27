@@ -40,10 +40,20 @@ app.get("/", (c) => {
   return c.redirect("/configure");
 });
 
-// Configuration Web Page
+// Configuration Web Page (Default)
 app.get("/configure", (c) => {
   const origin = new URL(c.req.url).origin;
-  const html = renderConfigurePage(origin);
+  const userConfig = parseConfig(undefined, c.env);
+  const html = renderConfigurePage(origin, userConfig);
+  return c.html(html);
+});
+
+// Configuration Web Page (Pre-filled with installed addon config)
+app.get("/:config/configure", (c) => {
+  const origin = new URL(c.req.url).origin;
+  const configParam = c.req.param("config");
+  const userConfig = parseConfig(configParam, c.env);
+  const html = renderConfigurePage(origin, userConfig);
   return c.html(html);
 });
 

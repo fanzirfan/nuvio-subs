@@ -1,4 +1,12 @@
-export function renderConfigurePage(currentOrigin: string): string {
+import { UserConfig } from "../types";
+
+export function renderConfigurePage(currentOrigin: string, initialConfig?: UserConfig): string {
+  const defaultLangs = initialConfig?.languages?.join(",") || "id,en";
+  const defaultSubdl = initialConfig?.subdlApiKey || "";
+  const defaultOS = initialConfig?.openSubtitlesApiKey || "";
+  const defaultSubsource = initialConfig?.subsourceToken || "";
+  const defaultClean = initialConfig?.cleanAds !== false;
+
   return `<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -92,7 +100,7 @@ export function renderConfigurePage(currentOrigin: string): string {
           <input 
             type="text" 
             id="languages" 
-            value="id,en" 
+            value="${defaultLangs}" 
             placeholder="id,en,ja" 
             class="w-full bg-[#09090b] border border-zinc-800 rounded-lg px-3.5 py-2 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition"
           />
@@ -122,6 +130,7 @@ export function renderConfigurePage(currentOrigin: string): string {
             <input 
               type="password" 
               id="subdlApiKey" 
+              value="${defaultSubdl}"
               placeholder="Paste SubDL API Key" 
               class="w-full bg-[#09090b] border border-zinc-800 rounded-lg pl-3.5 pr-10 py-2 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition"
             />
@@ -147,6 +156,7 @@ export function renderConfigurePage(currentOrigin: string): string {
             <input 
               type="password" 
               id="openSubtitlesApiKey" 
+              value="${defaultOS}"
               placeholder="Paste OpenSubtitles v3 API Key" 
               class="w-full bg-[#09090b] border border-zinc-800 rounded-lg pl-3.5 pr-10 py-2 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition"
             />
@@ -172,6 +182,7 @@ export function renderConfigurePage(currentOrigin: string): string {
             <input 
               type="password" 
               id="subsourceToken" 
+              value="${defaultSubsource}"
               placeholder="Paste Subsource API Key" 
               class="w-full bg-[#09090b] border border-zinc-800 rounded-lg pl-3.5 pr-10 py-2 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition"
             />
@@ -191,7 +202,7 @@ export function renderConfigurePage(currentOrigin: string): string {
           </div>
         </div>
         <label class="relative inline-flex items-center cursor-pointer shrink-0">
-          <input type="checkbox" id="cleanAds" checked class="sr-only peer">
+          <input type="checkbox" id="cleanAds" ${defaultClean ? "checked" : ""} class="sr-only peer">
           <div class="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-zinc-950 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 peer-checked:after:bg-zinc-950 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-zinc-100"></div>
         </label>
       </div>
@@ -311,6 +322,7 @@ export function renderConfigurePage(currentOrigin: string): string {
     }
 
     document.getElementById('languages').addEventListener('input', syncLangChips);
+    syncLangChips();
 
     function getConfigPayload() {
       const langs = document.getElementById('languages').value.split(',').map(s => s.trim()).filter(Boolean);
