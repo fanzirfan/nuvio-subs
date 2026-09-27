@@ -61,12 +61,19 @@ export async function fetchSubDLSubtitles(
         : rawUrl;
 
       const langCode = (sub.language || sub.lang || "en").toLowerCase();
+      const normalizedLang = langCode === "id" ? "ind" : langCode === "en" ? "eng" : langCode;
+      const releaseName = sub.release_name || sub.name || "";
+      const displayLabel = releaseName
+        ? `[SubDL] ${releaseName}`
+        : `[SubDL] ${normalizedLang.toUpperCase()}`;
 
       results.push({
-        id: `subdl-${sub.release_name || sub.name || Math.random().toString(36).substring(7)}`,
+        id: `subdl-${releaseName || Math.random().toString(36).substring(7)}`,
         url: config?.cleanAds ? proxyUrl : rawUrl,
-        lang: langCode === "id" ? "ind" : langCode === "en" ? "eng" : langCode,
-        title: `[SubDL] ${sub.release_name || sub.name || "Subtitle"}`,
+        lang: normalizedLang,
+        label: displayLabel,
+        title: displayLabel,
+        name: displayLabel,
       });
     }
 

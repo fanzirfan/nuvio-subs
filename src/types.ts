@@ -10,7 +10,9 @@ export interface SubtitleItem {
   id: string;
   url: string;
   lang: string;
+  label?: string;
   title?: string;
+  name?: string;
 }
 
 export interface SubtitlesResponse {

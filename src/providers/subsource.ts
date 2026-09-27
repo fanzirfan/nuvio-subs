@@ -155,11 +155,18 @@ export async function fetchSubsourceSubtitles(
             ? "eng"
             : langStr;
 
+        const releaseName = item.releaseName || item.title || item.name || "";
+        const displayLabel = releaseName
+          ? `[Subsource] ${releaseName}`
+          : `[Subsource] ${normalizedLang.toUpperCase()}`;
+
         results.push({
           id: `subsource-${item.id || Math.random().toString(36).substring(7)}`,
           url: config?.cleanAds ? proxyUrl : downloadEndpoint,
           lang: normalizedLang,
-          title: `[Subsource] ${item.releaseName || item.title || item.name || "Subtitle"}`,
+          label: displayLabel,
+          title: displayLabel,
+          name: displayLabel,
         });
       }
     }

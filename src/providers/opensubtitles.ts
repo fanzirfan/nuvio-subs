@@ -62,16 +62,23 @@ export async function fetchOpenSubtitles(
       if (!fileId) continue;
 
       const langCode = (attributes.language || "en").toLowerCase();
+      const normalizedLang = langCode === "id" ? "ind" : langCode === "en" ? "eng" : langCode;
+      const releaseName = attributes.release || file.file_name || "";
+      const displayLabel = releaseName
+        ? `[OpenSubtitles] ${releaseName}`
+        : `[OpenSubtitles] ${normalizedLang.toUpperCase()}`;
 
       const proxyUrl = originUrl
-        ? `${originUrl}/clean-sub?os_file_id=${fileId}&os_api_key=${encodeURIComponent(apiKey)}&name=${encodeURIComponent(attributes.release || file.file_name || "opensubtitles")}`
+        ? `${originUrl}/clean-sub?os_file_id=${fileId}&os_api_key=${encodeURIComponent(apiKey)}&name=${encodeURIComponent(releaseName || "opensubtitles")}`
         : "";
 
       results.push({
         id: `os-${item.id}`,
         url: proxyUrl || `https://www.opensubtitles.com/en/subtitles/${item.id}`,
-        lang: langCode === "id" ? "ind" : langCode === "en" ? "eng" : langCode,
-        title: `[OpenSubtitles] ${attributes.release || file.file_name || "Subtitle"}`,
+        lang: normalizedLang,
+        label: displayLabel,
+        title: displayLabel,
+        name: displayLabel,
       });
     }
 
