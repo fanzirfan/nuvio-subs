@@ -1,0 +1,10 @@
+name = "nuvio-subs"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+DEFAULT_LANGUAGES = "id,en"
+# Opsional: Jika ingin setting API key default di Worker:
+# SUBDL_API_KEY = "your-subdl-api-key"
+# OPENSUBTITLES_API_KEY = "your-opensubtitles-api-key"

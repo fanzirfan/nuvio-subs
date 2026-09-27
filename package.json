@@ -1,0 +1,29 @@
+{
+  "name": "nuvio-subs",
+  "version": "1.0.0",
+  "description": "Custom Ad-Free Subtitle Plugin for Stremio & Nuvio running on Cloudflare Workers",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "stremio",
+    "nuvio",
+    "subtitles",
+    "cloudflare-workers",
+    "ad-blocker"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "fflate": "^0.8.2",
+    "hono": "^4.7.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250224.0",
+    "typescript": "^5.8.2",
+    "wrangler": "^3.114.0"
+  }
+}
