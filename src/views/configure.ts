@@ -72,13 +72,16 @@ export function renderConfigurePage(currentOrigin: string): string {
         />
       </div>
 
-      <!-- Subsource Token -->
+      <!-- Subsource API Key -->
       <div>
-        <label class="block text-sm font-semibold text-slate-300 mb-1.5">Subsource Token (Opsional)</label>
+        <div class="flex justify-between items-center mb-1.5">
+          <label class="text-sm font-semibold text-slate-300">Subsource API Key (Opsional)</label>
+          <a href="https://subsource.net" target="_blank" class="text-xs text-indigo-400 hover:text-indigo-300">Dapatkan Key &rarr;</a>
+        </div>
         <input 
           type="password" 
           id="subsourceToken" 
-          placeholder="Opsional jika ada" 
+          placeholder="Masukkan Subsource API Key (dari menu Profile)" 
           class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
         />
       </div>

@@ -20,6 +20,7 @@ export async function fetchSubsourceSubtitles(
     };
 
     if (config?.subsourceToken) {
+      headers["X-API-Key"] = config.subsourceToken;
       headers["Authorization"] = `Bearer ${config.subsourceToken}`;
     }
 
