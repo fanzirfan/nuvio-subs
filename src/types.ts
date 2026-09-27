@@ -44,6 +44,7 @@ export interface ProviderDebugInfo {
   status?: number;
   count: number;
   error?: string;
+  details?: string;
   sample?: Array<{ title?: string; lang: string }>;
 }
 

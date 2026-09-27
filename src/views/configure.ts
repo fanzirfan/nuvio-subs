@@ -247,12 +247,13 @@ export function renderConfigurePage(currentOrigin: string): string {
         el.innerHTML = '<span class="text-slate-400">⚪ Key belum diisi</span>';
         return;
       }
+      const detailsHtml = info.details ? '<div class="text-[10px] text-slate-400 mt-0.5">' + info.details + '</div>' : '';
       if (info.count > 0) {
-        el.innerHTML = '<span class="text-emerald-400 font-semibold">🟢 Aktif (Ditemukan ' + info.count + ' subtitle)</span>';
+        el.innerHTML = '<span class="text-emerald-400 font-semibold">🟢 Aktif (Ditemukan ' + info.count + ' subtitle)</span>' + detailsHtml;
       } else if (info.status === 200) {
-        el.innerHTML = '<span class="text-amber-400">🟡 Terhubung, tetapi 0 subtitle ditemukan untuk bahasa ini</span>';
+        el.innerHTML = '<span class="text-amber-400">🟡 Terhubung (0 subtitle cocok dengan filter bahasa)</span>' + detailsHtml;
       } else {
-        el.innerHTML = '<span class="text-red-400 font-semibold">🔴 Error: ' + (info.error || 'HTTP ' + info.status) + '</span>';
+        el.innerHTML = '<span class="text-red-400 font-semibold">🔴 Error: ' + (info.error || 'HTTP ' + info.status) + '</span>' + detailsHtml;
       }
     }
   </script>
