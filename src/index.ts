@@ -18,13 +18,23 @@ app.use(
   })
 );
 
-function getManifest(configurable: boolean = true): StremioManifest {
+const BRAND_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <rect width="256" height="256" rx="56" fill="#09090b" />
+  <path d="M 76 192 L 76 98 C 76 60 104 60 116 84 L 140 172 C 152 196 180 196 180 158 L 180 64"
+        fill="none"
+        stroke="#f4f4f5"
+        stroke-width="34"
+        stroke-linecap="round"
+        stroke-linejoin="round" />
+</svg>`;
+
+function getManifest(origin?: string): StremioManifest {
   return {
     id: "community.nuviosubs.cleaner",
     version: "1.0.0",
     name: "Nuvio Subs (Zero Ads)",
     description: "Personalized multi-provider subtitle plugin with on-the-fly ad blocker & cleaner (SubDL, OpenSubtitles, Subsource).",
-    logo: "https://raw.githubusercontent.com/stremio/stremio-addon-sdk/master/docs/logo.png",
+    logo: origin ? `${origin}/logo.svg` : "https://raw.githubusercontent.com/fanzirfan/nuvio-subs/main/branding/dist/symbol/nuvio-symbol-app-icon.svg",
     resources: ["subtitles"],
     types: ["movie", "series"],
     catalogs: [],
@@ -34,6 +44,25 @@ function getManifest(configurable: boolean = true): StremioManifest {
     },
   };
 }
+
+// Brand Logo & Favicon Endpoints
+app.get("/logo.svg", (c) => {
+  return c.body(BRAND_LOGO_SVG, 200, {
+    "Content-Type": "image/svg+xml",
+    "Cache-Control": "public, max-age=86400",
+  });
+});
+
+app.get("/favicon.svg", (c) => {
+  return c.body(BRAND_LOGO_SVG, 200, {
+    "Content-Type": "image/svg+xml",
+    "Cache-Control": "public, max-age=86400",
+  });
+});
+
+app.get("/favicon.ico", (c) => {
+  return c.redirect("/favicon.svg");
+});
 
 // Redirect root to configuration page
 app.get("/", (c) => {
@@ -59,12 +88,14 @@ app.get("/:config/configure", (c) => {
 
 // Default Manifest
 app.get("/manifest.json", (c) => {
-  return c.json(getManifest());
+  const origin = new URL(c.req.url).origin;
+  return c.json(getManifest(origin));
 });
 
 // Configured Manifest
 app.get("/:config/manifest.json", (c) => {
-  return c.json(getManifest());
+  const origin = new URL(c.req.url).origin;
+  return c.json(getManifest(origin));
 });
 
 // Debug endpoint handler

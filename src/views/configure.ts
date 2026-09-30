@@ -13,6 +13,8 @@ export function renderConfigurePage(currentOrigin: string, initialConfig?: UserC
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nuvio Subs &mdash; Configuration</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/logo.svg">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,8 +54,10 @@ export function renderConfigurePage(currentOrigin: string, initialConfig?: UserC
   <header class="border-b border-zinc-800/80 bg-[#09090b]/80 backdrop-blur-md sticky top-0 z-30">
     <div class="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
       <div class="flex items-center space-x-2.5">
-        <div class="w-6 h-6 rounded-md bg-zinc-100 flex items-center justify-center text-zinc-950 font-bold text-xs tracking-tight">
-          N
+        <div class="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800/90 flex items-center justify-center p-1 shadow-sm">
+          <svg class="w-full h-full text-zinc-100" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="36" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M 76 192 L 76 98 C 76 60 104 60 116 84 L 140 172 C 152 196 180 196 180 158 L 180 64" />
+          </svg>
         </div>
         <span class="text-sm font-semibold tracking-tight text-zinc-100">nuvio-subs</span>
         <span class="text-[11px] text-zinc-500 font-mono bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded">v1.0.0</span>

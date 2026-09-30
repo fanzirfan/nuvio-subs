@@ -1,81 +1,96 @@
-# 🎬 Nuvio Subs (Zero Ads) - Stremio & Nuvio Custom Subtitle Plugin
+<p align="center">
+  <img src="branding/dist/symbol/nuvio-symbol-app-icon.svg" width="96" height="96" alt="Nuvio Subs Logo" />
+</p>
 
-Plugin subtitle kustom untuk **Stremio & Nuvio** yang berjalan di atas **Cloudflare Workers (Serverless Edge)** menggunakan TypeScript & Hono.
+# Nuvio Subs
 
-Plugin ini secara otomatis mencari subtitle dari berbagai provider dan membersihkan iklan yang mengganggu (judi/slot gacor, 1xbet, link telegram/web, dan watermark spam) secara *on-the-fly* sebelum disajikan ke video player.
+Subtitle aggregator and ad-cleaning addon for Stremio and Nuvio, built with TypeScript and Hono on Cloudflare Workers.
 
----
-
-## ✨ Fitur Unggulan
-
-- 🚫 **On-the-fly Ad & Spam Cleaner**: Menghapus teks iklan judi, link website/telegram, promo sponsor, dan watermark translator tanpa menggeser sinkronisasi waktu (timecode).
-- 📦 **Multi-Provider Parallel Aggregator**:
-  - **SubDL API** (Support film & series, IMDB ID, Season/Episode)
-  - **OpenSubtitles v3 REST API**
-  - **Subsource API**
-- ⚡ **Super Cepat & Serverless**: Berjalan di Cloudflare Workers Edge Network (latency sub-millisecond) dengan Cloudflare Cache API gratis.
-- ⚙️ **Web Configuration UI (`/configure`)**: Halaman web modern untuk memasukkan API Key, mengatur urutan prioritas bahasa, dan meng-install plugin ke Stremio dengan 1 klik (`stremio://...`).
-- 🗜️ **Auto ZIP / GZIP Decompression**: Mengekstrak subtitle yang dikemas dalam file archive `.zip` langsung di memori worker (`fflate`).
+It queries subtitle providers in parallel and strips embedded advertisements (gambling promotions, betting links, Telegram invites, and translator watermarks) on the fly before delivering subtitles to the player.
 
 ---
 
-## 🚀 Cara Menjalankan Secara Lokal (Development)
+## Features
 
-1. **Install Dependensi:**
+- **Ad and spam removal**: Filters out gambling promotions, Telegram and website URLs, sponsor messages, and watermark cues while preserving original timecodes.
+- **Multi-provider search**: Queries SubDL, OpenSubtitles (REST API v3), and Subsource in parallel.
+- **Serverless edge deployment**: Runs on Cloudflare Workers with edge caching via the Cache API.
+- **Web configuration (`/configure`)**: Web page to manage API credentials, reorder language preferences, and install the addon into Stremio with a single click.
+- **Archive decompression**: Extracts `.zip` and `.gz` subtitle archives in memory using `fflate`.
+
+---
+
+## Local Development
+
+1. Install dependencies:
    ```bash
-   bun install
-   # atau
    npm install
    ```
 
-2. **Jalankan Dev Server:**
+2. Start the local development server:
    ```bash
-   bun run dev
-   # atau
    npm run dev
    ```
 
-3. Buka browser di `http://localhost:8787/configure` untuk membuka Web Configuration UI.
+3. Open `http://localhost:8787/configure` in your browser to access the configuration page.
 
 ---
 
-## 🌐 Cara Deploy ke Cloudflare Workers (Gratis)
+## Deployment to Cloudflare Workers
 
-1. Login ke akun Cloudflare (cukup sekali):
+1. Authenticate with Cloudflare:
    ```bash
    npx wrangler login
    ```
 
-2. Deploy worker:
+2. Deploy the worker:
    ```bash
-   bun run deploy
-   # atau
    npm run deploy
    ```
 
-3. Kamu akan mendapatkan URL publik seperti `https://nuvio-subs.<username>.workers.dev`.
-4. Buka URL tersebut di browser, masukkan API key subtitle milikmu di halaman `/configure`, lalu klik tombol **"Install ke Stremio / Nuvio"**!
+3. Open the generated worker URL (`https://nuvio-subs.<subdomain>.workers.dev/configure`), enter your provider API keys, and click **Install to Stremio / Nuvio**.
 
 ---
 
-## 📁 Struktur Kode
+## Project Structure
 
 ```
 ├── src/
-│   ├── index.ts               # Hono entrypoint & route Stremio protocol
-│   ├── config.ts              # Parser parameter konfigurasi
-│   ├── types.ts               # Type definition Stremio manifest & subtitle
+│   ├── index.ts               # Hono application entrypoint and Stremio protocol routes
+│   ├── config.ts              # Configuration parser and validation
+│   ├── types.ts               # Stremio manifest and subtitle type definitions
 │   ├── cleaner/
-│   │   ├── index.ts           # Pipeline download, unzipper & cleaner
-│   │   ├── srtParser.ts       # Parser SRT/VTT & rekalkulasi cue number
-│   │   └── patterns.ts        # Kumpulan regex deteksi iklan & spam
+│   │   ├── index.ts           # Fetch, decompression, and cleaning pipeline
+│   │   ├── srtParser.ts       # SRT/VTT parser and cue re-indexing
+│   │   └── patterns.ts        # Ad detection regular expressions
 │   ├── providers/
-│   │   ├── index.ts           # Multi-provider aggregator & sorting
-│   │   ├── subdl.ts           # SubDL adapter
-│   │   ├── opensubtitles.ts   # OpenSubtitles v3 adapter
-│   │   └── subsource.ts       # Subsource adapter
+│   │   ├── index.ts           # Multi-provider aggregator and priority sorter
+│   │   ├── subdl.ts           # SubDL provider adapter
+│   │   ├── opensubtitles.ts   # OpenSubtitles v3 REST API adapter
+│   │   └── subsource.ts       # Subsource provider adapter
 │   └── views/
-│       └── configure.ts       # Tampilan antarmuka Web UI /configure
+│       └── configure.ts       # Web configuration interface
+├── branding/                  # Official logo masters and exported assets
 └── tests/
-    └── cleaner.test.ts        # Unit test otomatis ad-cleaner
+    └── cleaner.test.ts        # Ad cleaner unit tests
 ```
+
+---
+
+## Testing
+
+Run unit tests:
+```bash
+bun test
+```
+
+Run TypeScript type check:
+```bash
+npm run typecheck
+```
+
+---
+
+## License
+
+MIT
