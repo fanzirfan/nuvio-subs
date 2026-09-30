@@ -49,9 +49,9 @@ This document defines the visual design system, token architecture, and interact
 
 ## 3. Typography
 
-- **Headings & Body Display**: `Plus Jakarta Sans`
-  - Weights: `600` (SemiBold), `700` (Bold), `800` (ExtraBold)
-  - Characteristics: Modern geometric sans with tight tracking, providing confident authority on titles.
+- **Headings & Body Display**: `Space Grotesk`
+  - Weights: `500` (Medium), `600` (SemiBold), `700` (Bold), `800` (ExtraBold)
+  - Characteristics: Geometric grotesque typeface with quirky retro-digital cuts, angled terminals, and tech brutalist attitude, maintaining sharp readability at all sizes.
 - **Data, Forms, & Badges**: `JetBrains Mono`
   - Weights: `500` (Medium), `700` (Bold), `800` (ExtraBold)
   - Characteristics: Clean monospaced letterforms that ensure key codes, language ISO codes, and credentials remain legible.
