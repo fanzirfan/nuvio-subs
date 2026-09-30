@@ -16,7 +16,7 @@
     "ad-blocker"
   ],
   "author": "",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "dependencies": {
     "fflate": "^0.8.2",
     "hono": "^4.7.4"
