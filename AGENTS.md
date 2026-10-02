@@ -54,9 +54,10 @@ Public subtitle repositories (SubDL, OpenSubtitles, Subsource) frequently bundle
              │
              ├─► Check Cloudflare Cache API (caches.default, TTL 24h) -> return if hit
              ├─► Fetch upstream file (HTTP GET)
-             ├─► Check ZIP magic bytes (0x50, 0x4B, 0x03, 0x04)
-             │     └─ Decompress in memory via fflate.unzipSync() -> extract .srt / .vtt
-             ├─► Text decode: UTF-8 with fallback to Windows-1252
+             ├─► Detect container by magic bytes
+             │     ├─ ZIP  (0x50, 0x4B, 0x03, 0x04) -> fflate.unzipSync() -> extract .srt / .vtt
+             │     └─ GZIP (0x1F, 0x8B)             -> fflate.gunzipSync()
+             ├─► Text decode: strict UTF-8 (fatal) with fallback to Windows-1252
              ├─► cleanSubtitleContent() (src/cleaner/srtParser.ts)
              │     ├─ Parse subtitle blocks and timecodes (HH:MM:SS,mmm --> HH:MM:SS,mmm)
              │     ├─ Strip HTML styling tags (<b>, <i>, <font>)
@@ -69,7 +70,7 @@ Public subtitle repositories (SubDL, OpenSubtitles, Subsource) frequently bundle
 
 ### Key Concurrency & Isolation Patterns
 - **Fault-Tolerant Provider Fan-Out**: `aggregateSubtitles` uses `Promise.allSettled` across all provider requests. If an upstream service (e.g., SubDL rate limit or OpenSubtitles 503) fails or throws, the error is logged and healthy providers still return their subtitles.
-- **In-Memory Streaming & Decompression**: Cloudflare Workers isolates have no disk access (`fs`). Subtitle archive decompression is performed purely in memory using `fflate` (`unzipSync`).
+- **In-Memory Streaming & Decompression**: Cloudflare Workers isolates have no disk access (`fs`). Subtitle archive decompression is performed purely in memory using `fflate` (`unzipSync` for `.zip`, `gunzipSync` for `.gz`), dispatched on magic bytes in `decodeSubtitleBuffer()`.
 - **Edge Caching**: Search results are cached for 1 hour (`Cache-Control: public, max-age=3600`). Cleaned subtitle files are stored via the Cloudflare Workers Cache API (`caches.default`) for 24 hours (`max-age=86400`).
 
 ---
@@ -90,11 +91,12 @@ nuvio-subs/
 │   │   ├── opensubtitles.ts  # OpenSubtitles v1 REST API integration
 │   │   └── subsource.ts      # Subsource API integration
 │   └── cleaner/              # Subtitle parsing, ad identification, and sanitization
-│       ├── index.ts          # HTTP fetcher, ZIP extraction (fflate), Cloudflare cache wrapper
+│       ├── index.ts          # HTTP fetcher, ZIP/GZIP extraction (fflate), charset fallback, Cloudflare cache wrapper
 │       ├── srtParser.ts      # SRT/WebVTT parser, ad cue elimination, sequential re-indexer
 │       └── patterns.ts       # Regular expression catalog for ads, betting, URLs, credits
 ├── tests/                    # Test suites and regression verification
-│   └── cleaner.test.ts       # Cleaner validation script for ad removal and dialogue retention
+│   ├── cleaner.test.ts       # Cleaner validation script for ad removal and dialogue retention
+│   └── decoding.test.ts      # Container detection, charset fallback, and HTML escaping regressions
 ├── branding/                 # Brand design assets, master SVGs, and webmanifest icons
 ├── wrangler.toml             # Cloudflare Workers deployment and environment configuration
 ├── tsconfig.json             # TypeScript compiler settings for Cloudflare Workers
@@ -136,9 +138,10 @@ All package management should use `npm` (to maintain `package-lock.json`).
 
 ### 3. Error Handling & Defensive Fallbacks
 - **Zero-Crash Resilience**: Subtitle lookups MUST NEVER throw unhandled 500 errors to Stremio or Nuvio, which can crash the client video player. Catch provider errors internally, log warnings with `console.error`, and return empty arrays `[]`.
-- **Archive Extraction Graceful Degradation**: When decompressing upstream files, if `unzipSync` throws, fall back immediately to decoding the raw buffer via `TextDecoder("utf-8")`. If UTF-8 decoding throws, fall back to `TextDecoder("windows-1252")`.
+- **Archive Extraction Graceful Degradation**: `decodeSubtitleBuffer()` dispatches on magic bytes (`PK\x03\x04` for ZIP, `\x1F\x8B` for GZIP). If `unzipSync`/`gunzipSync` throws, fall back to decoding the raw buffer as text. Decoding MUST use `new TextDecoder("utf-8", { fatal: true })` so malformed legacy ANSI bytes actually throw and the `TextDecoder("windows-1252")` fallback becomes reachable; a non-fatal decoder silently emits U+FFFD instead.
 - **Cloudflare Cache Compatibility**: Wrap all `caches.default` operations in `try-catch` blocks so code remains executable in local node/test environments where the Cloudflare Cache API is absent.
 - **Configuration Parsing**: In `src/config.ts`, if Base64 or JSON decoding fails, catch the error and return `defaultConfig` instead of failing the request.
+- **View Escaping**: Anything derived from user input (the `/:config/` path segment, query params) MUST pass through `escapeHtmlAttribute()` in `src/views/configure.ts` before being interpolated into markup. Unescaped quotes let a crafted shared link inject attributes into the page that collects provider API keys.
 
 ### 4. Concurrency & Async
 - Use `Promise.allSettled` for aggregating data across distinct remote providers to isolate network failures and latency spikes.
@@ -166,7 +169,7 @@ All package management should use `npm` (to maintain `package-lock.json`).
 - `src/providers/index.ts`: Orchestrates multi-provider fan-out and applies language scoring heuristics (mapping aliases like `ind` to `id`).
 - `src/cleaner/srtParser.ts`: Implements `cleanSubtitleContent` to parse SRT/VTT timecodes, scrub ad cues, and re-sequence remaining cues.
 - `src/cleaner/patterns.ts`: Defines `AD_PATTERNS`, containing regular expressions targeting betting sites, gambling domains, social handles, and promo text.
-- `src/cleaner/index.ts`: Implements `fetchAndCleanSubtitle`, handling network retrieval, in-memory ZIP decompression, charset decoding, and caching.
+- `src/cleaner/index.ts`: Implements `fetchAndCleanSubtitle` (network retrieval + caching) plus `decodeSubtitleBuffer`/`decodeSubtitleText` for ZIP/GZIP extraction and UTF-8 → Windows-1252 charset fallback.
 - `src/views/configure.ts`: Implements `renderConfigurePage`, generating the interactive HTML configuration dashboard.
 
 ---
@@ -216,6 +219,6 @@ npx tsx tests/cleaner.test.ts
 When making modifications, be mindful of components not currently covered by automated unit tests:
 1. **Hono Route Endpoints**: Route matching, parameter parsing (`:config`, `:type`, `:id`), and error handling in `src/index.ts`.
 2. **Provider Integrations**: Upstream API query formatting, authentication headers, and response parsing in `src/providers/*.ts`.
-3. **ZIP & Charset Fallbacks**: Multi-file archive extraction and Windows-1252 decoding logic in `src/cleaner/index.ts`.
+3. **Live Upstream Fetching**: HTTP retrieval, Cloudflare cache read/write, and provider responses for `fetchAndCleanSubtitle` in `src/cleaner/index.ts` (buffer decoding itself is covered by `tests/decoding.test.ts`).
 4. **Configuration Edge Cases**: Malformed Base64 strings, URL-encoded entities, and missing keys in `src/config.ts`.
 5. **WebVTT Header Handling**: Files starting with `WEBVTT` and `NOTE` comments.

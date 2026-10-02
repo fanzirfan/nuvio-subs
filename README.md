@@ -16,7 +16,8 @@ It queries subtitle providers in parallel and strips embedded advertisements (ga
 - **Multi-provider search**: Queries SubDL, OpenSubtitles (REST API v3), and Subsource in parallel.
 - **Serverless edge deployment**: Runs on Cloudflare Workers with edge caching via the Cache API.
 - **Web configuration (`/configure`)**: Web page to manage API credentials, reorder language preferences, and install the addon into Stremio with a single click.
-- **Archive decompression**: Extracts `.zip` and `.gz` subtitle archives in memory using `fflate`.
+- **Archive decompression**: Extracts `.zip` and `.gz` subtitle archives in memory using `fflate`, dispatched on magic bytes.
+- **Charset recovery**: Decodes UTF-8 strictly and falls back to Windows-1252, so legacy ANSI subtitle files keep their accents and smart quotes instead of turning into replacement characters.
 
 ---
 
@@ -60,7 +61,7 @@ It queries subtitle providers in parallel and strips embedded advertisements (ga
 │   ├── config.ts              # Configuration parser and validation
 │   ├── types.ts               # Stremio manifest and subtitle type definitions
 │   ├── cleaner/
-│   │   ├── index.ts           # Fetch, decompression, and cleaning pipeline
+│   │   ├── index.ts           # Fetch, ZIP/GZIP decompression, charset decoding, and cleaning pipeline
 │   │   ├── srtParser.ts       # SRT/VTT parser and cue re-indexing
 │   │   └── patterns.ts        # Ad detection regular expressions
 │   ├── providers/
@@ -72,7 +73,8 @@ It queries subtitle providers in parallel and strips embedded advertisements (ga
 │       └── configure.ts       # Web configuration interface
 ├── branding/                  # Official logo masters and exported assets
 └── tests/
-    └── cleaner.test.ts        # Ad cleaner unit tests
+    ├── cleaner.test.ts        # Ad cleaner unit tests
+    └── decoding.test.ts       # Container detection, charset fallback, and HTML escaping regressions
 ```
 
 ---
