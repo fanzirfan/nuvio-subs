@@ -247,7 +247,7 @@ export function renderConfigurePage(currentOrigin: string, initialConfig?: UserC
         <!-- Neubrutalist Toggle Checkbox -->
         <label class="relative inline-flex items-center cursor-pointer shrink-0">
           <input type="checkbox" id="cleanAds" ${defaultClean ? "checked" : ""} class="sr-only peer">
-          <div class="w-12 h-7 bg-[#0A0B0F] border-2 border-black rounded-full shadow-neo-sm peer peer-checked:bg-[#A7F3D0] peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-zinc-400 peer-checked:after:bg-black after:border-2 after:border-black after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+          <div class="relative w-12 h-7 bg-[#0A0B0F] border-2 border-black rounded-full shadow-neo-sm peer peer-checked:bg-[#A7F3D0] peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-[1px] after:left-[2px] after:bg-zinc-400 peer-checked:after:bg-white after:border-2 after:border-black after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
         </label>
       </div>
 
