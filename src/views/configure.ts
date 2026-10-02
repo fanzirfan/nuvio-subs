@@ -1,10 +1,25 @@
 import { UserConfig } from "../types";
 
+/**
+ * Escapes text for interpolation into HTML attribute values. Config values come
+ * from a URL path segment that third parties can craft, so unescaped quotes let
+ * them break out of `value="..."` and inject attributes into the page that
+ * collects provider API keys.
+ */
+function escapeHtmlAttribute(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function renderConfigurePage(currentOrigin: string, initialConfig?: UserConfig): string {
-  const defaultLangs = initialConfig?.languages?.join(",") || "id,en";
-  const defaultSubdl = initialConfig?.subdlApiKey || "";
-  const defaultOS = initialConfig?.openSubtitlesApiKey || "";
-  const defaultSubsource = initialConfig?.subsourceToken || "";
+  const defaultLangs = escapeHtmlAttribute(initialConfig?.languages?.join(",") || "id,en");
+  const defaultSubdl = escapeHtmlAttribute(initialConfig?.subdlApiKey || "");
+  const defaultOS = escapeHtmlAttribute(initialConfig?.openSubtitlesApiKey || "");
+  const defaultSubsource = escapeHtmlAttribute(initialConfig?.subsourceToken || "");
   const defaultClean = initialConfig?.cleanAds !== false;
 
   return `<!DOCTYPE html>
