@@ -79,6 +79,12 @@ It queries subtitle providers in parallel and strips embedded advertisements (ga
 
 ---
 
+## Related Projects
+
+- **[nuvio-aio](https://nuvio-aio.fanzirfan.workers.dev/)** ([source](https://github.com/fanzirfan/nuvio-aio)) — Companion All-in-One Stremio & Nuvio relay, built on the same Cloudflare Workers + Hono stack. It unifies AIOMetadata catalogs, PenguPlay streams and Live TV, and merges in **nuvio-subs** as its ad-free subtitle backend.
+
+---
+
 ## Testing
 
 Run unit tests:
